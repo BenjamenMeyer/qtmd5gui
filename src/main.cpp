@@ -1,12 +1,11 @@
 #include <QApplication>
-#include <QtGui/QPushButton>
+
+#include <verifier.h>
 
 int main(int argc, char* argv[])
 	{
 	QApplication theApplication(argc, argv);
-
-	QPushButton hello("Hello");
-	hello.show();
-
+	Verifier main(NULL);
+	main.show();
 	return theApplication.exec();
 	}
