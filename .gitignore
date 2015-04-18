@@ -69,5 +69,5 @@ Makefile
 # Editors
 *.sw?
 
-qt5md5gui
+qthashgui
 *moc*.cpp
