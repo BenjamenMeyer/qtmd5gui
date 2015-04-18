@@ -68,3 +68,6 @@ Makefile
 
 # Editors
 *.sw?
+
+qt5md5gui
+*moc*.cpp
