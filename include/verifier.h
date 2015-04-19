@@ -1,11 +1,15 @@
 #ifndef VERIFIER_H__
 #define VERIFIER_H__
 
+#include <QtCore/QByteArray>
 #include <QtCore/QString>
+#include <QtCore/QThread>
 #include <QtGui/QLabel>
 #include <QtGui/QPushButton>
 #include <QtGui/QTextEdit>
 #include <QtGui/QWidget>
+
+#include <hash_coordinator.h>
 
 class Verifier: public QWidget
 	{
@@ -14,16 +18,17 @@ class Verifier: public QWidget
 		Verifier(QWidget* _parent);
 		virtual ~Verifier();
 
-	public slots:
-	signals:
+	public Q_SLOTS:
+	Q_SIGNALS:
 		void startHashing(QString _path);
 		void cancelHashing();
+		void resetHashing();
 
 	protected:
 		void createLayout();
 
 
-	protected slots:
+	protected Q_SLOTS:
 		void doSelectPath();
 		void doAction();
 
@@ -32,8 +37,10 @@ class Verifier: public QWidget
 		QPushButton* buttonPathSelector;
 		QPushButton* buttonAction;
 		QTextEdit* labelLog;
-	
-	private slots:
+
+		HashCoordinator hasher;
+		QThread hashThread;
+	private Q_SLOTS:
 	};
 
 #endif //VERIFIER_H__

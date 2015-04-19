@@ -2,6 +2,7 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QString>
+#include <QtCore/QTimer>
 #include <QtGui/QFileDialog>
 #include <QtGui/QFrame>
 #include <QtGui/QHBoxLayout>
@@ -10,7 +11,6 @@
 #include <QtGui/QPushButton>
 #include <QtGui/QTextEdit>
 #include <QtGui/QVBoxLayout>
-
 
 Verifier::Verifier(QWidget* _parent) : QWidget(_parent, 0)
 	{
@@ -21,10 +21,22 @@ Verifier::Verifier(QWidget* _parent) : QWidget(_parent, 0)
 
 	setWindowTitle("Qt File Verifier");
 	createLayout();
+
+	connect(this, SIGNAL(startHashing(QString)),
+	        &hasher, SLOT(startHashing(QString)));
+	connect(this, SIGNAL(cancelHashing()),
+	        &hasher, SIGNAL(cancelHashing()));
+	connect(this, SIGNAL(resetHashing()),
+	        &hasher, SIGNAL(resetHashing()));
+
+	hasher.moveToThread(&hashThread);
+	hashThread.start();
 	}
 
 Verifier::~Verifier()
 	{
+	hashThread.quit();
+	hashThread.wait();
 	}
 
 void Verifier::createLayout()
@@ -87,12 +99,17 @@ void Verifier::doAction()
 
 	if (currentStatus == "Start")
 		{
-		emit startHashing(labelPath->text());
+		Q_EMIT startHashing(labelPath->text());
 		buttonAction->setText("Stop");
+		}
+	else if (currentStatus == "Stop")
+		{
+		Q_EMIT cancelHashing();
+		buttonAction->setText("Reset");
 		}
 	else
 		{
-		Q_EMIT cancelHashing();
+		Q_EMIT resetHashing();
 		buttonAction->setText("Start");
 		}
 	}
