@@ -26,6 +26,11 @@ void FileHasher::processFile(int _modulo, QString _path)
 		return;
 		}
 
+	if (_modulo != modulo)
+		{
+		return;
+		}
+
 	QCryptographicHash hasher(QCryptographicHash::Sha1);
 
 	QFile theFile(_path);

@@ -5,6 +5,7 @@
 #include <QtCore/QThread>
 
 #include <file_hasher.h>
+#include <hash_db.h>
 
 #define HASHER_THREAD_COUNT		10
 
@@ -39,6 +40,7 @@ class HashCoordinator : public QObject
 			QThread thread;
 			};
 		struct ht hashers[HASHER_THREAD_COUNT];
+		HashDb db;
 
 	private Q_SLOTS:
 	};

@@ -12,8 +12,8 @@ class HashDb : public QObject
 		~HashDb();
 
 	public Q_SLOTS:
-		void addDirectory(QString _path);
-		void addFile(int _module, QString _path);
+		void addDirectory(QString _path, QByteArray _hash);
+		void addFile(QString _path, QByteArray _hash);
 
 		void setMode(bool _generate);
 		void generateMissingObjects();
@@ -23,6 +23,8 @@ class HashDb : public QObject
 	protected:
 		QSqlDatabase db;
 		bool generation;
+
+		void init_database();
 
 	protected Q_SLOTS:
 	private:

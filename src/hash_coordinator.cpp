@@ -26,6 +26,7 @@ HashCoordinator::HashCoordinator(QObject* _parent) : cancelled(false)
 		        &(hashers[i].hasher), SLOT(processFile(int, QString)));
 		connect(&(hashers[i].hasher), SIGNAL(fileData(QString, QByteArray)),
 		        this, SLOT(receive_hash(QString, QByteArray)));
+
 		hashers[i].hasher.moveToThread(&(hashers[i].thread));
 		hashers[i].thread.start();
 		}
@@ -94,4 +95,5 @@ void HashCoordinator::receive_resetHashing()
 void HashCoordinator::receive_hash(QString _path, QByteArray _hash_value)
 	{
 	qDebug() << "Received Hash of " << _hash_value << "on file" << _path;
+	db.addFile(_path, _hash_value);
 	}
