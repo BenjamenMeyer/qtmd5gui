@@ -3,6 +3,7 @@
 
 #include <QtCore/QObject>
 #include <QtSql/QSqlDatabase>
+#include <QtSql/QSqlQuery>
 
 class HashDb : public QObject
 	{
@@ -23,6 +24,18 @@ class HashDb : public QObject
 	protected:
 		QSqlDatabase db;
 		bool generation;
+
+		QSqlQuery SQL_INSERT_DIRECTORY;
+		QSqlQuery SQL_HAS_DIRECTORY_BY_HASH;
+		QSqlQuery SQL_CHECK_INSERT_DIRECTORY;
+		QSqlQuery SQL_NEW_DIRECTORIES;
+		QSqlQuery SQL_MISSING_DIRECTORIES;
+
+		QSqlQuery SQL_INSERT_FILE;
+		QSqlQuery SQL_HAS_FILE_BY_HASH;
+		QSqlQuery SQL_CHECK_INSERT_FILE;
+		QSqlQuery SQL_NEW_FILES;
+		QSqlQuery SQL_MISSING_FILES;
 
 		void init_database();
 
