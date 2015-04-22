@@ -8,8 +8,8 @@
 #include <QtSql/QSqlQuery>
 #include <QtSql/QSqlError>
 
-//#define BIND_BY_NAME 1
-#define BIND_BY_NAME 0
+#define BIND_BY_NAME 1
+//#define BIND_BY_NAME 0
 
 QStringList schemas = (
 		QStringList() <<
@@ -19,9 +19,12 @@ QStringList schemas = (
 		QString("CREATE TEMPORARY TABLE IF NOT EXISTS checked_files (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, hash TEXT NOT NULL, path TEXT NOT NULL)")
 );
 
-#define MAKE_QT_SQL_STATEMENT(name, the_db, the_statement) \
-	name = QSqlQuery(the_db); \
-    name.prepare(the_statement)
+#define MAKE_QT_SQL_STATEMENT(name, the_db, the_statement)	\
+	name = QSqlQuery(the_db); 								\
+    if (!name.prepare(the_statement))						\
+		{													\
+		qDebug() << "Failed to prepare " << the_statement;	\
+		}
 
 HashDb::HashDb(QObject* _parent) : QObject(_parent)
 	{
@@ -176,7 +179,7 @@ void HashDb::addFile(QString _path, QByteArray _hash)
 			#endif
 			qDebug() << "Error: " << insertion.lastError();
 			}
-		insertion.clear();
+		//insertion.clear();
 		}
 	}
 void HashDb::setMode(bool _generate)
