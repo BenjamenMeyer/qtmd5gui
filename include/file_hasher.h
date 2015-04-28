@@ -15,12 +15,12 @@ class FileHasher : public QObject
 		void setModulo(int _m);
 
 	public Q_SLOTS:
-		void processFile(int _modulo, QString _path);
+		void processFile(int _modulo, QString _path, bool _generate);
 		void receive_cancelHashing();
 		void receive_resetHashing();
 
 	Q_SIGNALS:
-		void fileData(QString _path, QByteArray _hash);
+		void fileData(QString _path, QByteArray _hash, bool _generate);
 
 	protected:
 		int modulo;

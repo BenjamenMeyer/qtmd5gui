@@ -4,6 +4,7 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
 #include <QtCore/QThread>
+#include <QtGui/QCheckBox>
 #include <QtGui/QLabel>
 #include <QtGui/QPushButton>
 #include <QtGui/QTextEdit>
@@ -23,6 +24,13 @@ class Verifier: public QWidget
 		void startHashing(QString _path);
 		void cancelHashing();
 		void resetHashing();
+		void changeMode(bool _generate);
+
+		void getMissing();
+		void getNew();
+		void copyMissing();
+
+		void resetDatabase();
 
 	protected:
 		void createLayout();
@@ -31,12 +39,20 @@ class Verifier: public QWidget
 	protected Q_SLOTS:
 		void doSelectPath();
 		void doAction();
+		void doChangeMode(int _mode);
+
+		void receive_info(QString _message);
 
 	private:
 		QLabel* labelPath;
 		QPushButton* buttonPathSelector;
 		QPushButton* buttonAction;
+		QPushButton* buttonGetMissing;
+		QPushButton* buttonGetNew;
+		QPushButton* buttonCopyMissing;
+
 		QTextEdit* labelLog;
+		QCheckBox* checkGeneration;
 
 		HashCoordinator hasher;
 		QThread hashThread;

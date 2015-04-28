@@ -13,17 +13,18 @@ class HashDb : public QObject
 		~HashDb();
 
 	public Q_SLOTS:
-		void addDirectory(QString _path, QByteArray _hash);
-		void addFile(QString _path, QByteArray _hash);
+		void addDirectory(QString _path, QByteArray _hash, bool _generate);
+		void addFile(QString _path, QByteArray _hash, bool _generate);
 
-		void setMode(bool _generate);
 		void generateMissingObjects();
 		void generateNewObjects();
 
 	Q_SIGNALS:
+		void message(QString);
+		void copyFile(QString _source_path, QString _destination_path);
+
 	protected:
 		QSqlDatabase db;
-		bool generation;
 
 		QSqlQuery SQL_INSERT_DIRECTORY;
 		QSqlQuery SQL_HAS_DIRECTORY_BY_HASH;

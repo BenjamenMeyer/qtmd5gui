@@ -19,7 +19,7 @@ void FileHasher::setModulo(int _m)
 	modulo = _m;
 	}
 
-void FileHasher::processFile(int _modulo, QString _path)
+void FileHasher::processFile(int _modulo, QString _path, bool _generate)
 	{
 	if (cancelled)
 		{
@@ -52,7 +52,7 @@ void FileHasher::processFile(int _modulo, QString _path)
 			}
 
 		QByteArray hash_value = hasher.result();
-		Q_EMIT fileData(_path, hash_value.toHex());
+		Q_EMIT fileData(_path, hash_value.toHex(), _generate);
 		}
 	}
 void FileHasher::receive_cancelHashing()

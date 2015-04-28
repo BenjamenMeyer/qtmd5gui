@@ -70,17 +70,19 @@ void HashDb::init_database()
 		 }
 	}
 
-void HashDb::addDirectory(QString _path, QByteArray _hash)
+void HashDb::addDirectory(QString _path, QByteArray _hash, bool _generate)
 	{
 	if (db.isOpen())
 		{
 		QSqlQuery insertion;
-		if (generation)
+		if (_generate)
 			{
+			qDebug() << "Mode: Generate";
 			insertion = SQL_INSERT_DIRECTORY;
 			}
 		else
 			{
+			qDebug() << "Mode: Validate";
 			insertion = SQL_CHECK_INSERT_DIRECTORY;
 			}
 		insertion.bindValue(":hash", _hash);
@@ -103,18 +105,20 @@ void HashDb::addDirectory(QString _path, QByteArray _hash)
 			}
 		}
 	}
-void HashDb::addFile(QString _path, QByteArray _hash)
+void HashDb::addFile(QString _path, QByteArray _hash, bool _generate)
 	{
 	if (db.isOpen())
 		{
 		db.transaction();
 		QSqlQuery insertion(db);
-		if (generation)
+		if (_generate)
 			{
+			qDebug() << "Mode: Generate";
 			insertion = SQL_INSERT_FILE;
 			}
 		else
 			{
+			qDebug() << "Mode: Validate";
 			insertion = SQL_CHECK_INSERT_FILE;
 			}
 		insertion.bindValue(":hash", _hash);
@@ -136,10 +140,6 @@ void HashDb::addFile(QString _path, QByteArray _hash)
 			qDebug() << "Error: " << insertion.lastError();
 			}
 		}
-	}
-void HashDb::setMode(bool _generate)
-	{
-	generation = _generate;
 	}
 void HashDb::generateMissingObjects()
 	{
