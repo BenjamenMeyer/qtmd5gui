@@ -5,6 +5,7 @@
 #include <QtCore/QString>
 #include <QtCore/QThread>
 #include <QtGui/QCheckBox>
+#include <QtGui/QGroupBox>
 #include <QtGui/QLabel>
 #include <QtGui/QPushButton>
 #include <QtGui/QTextEdit>
@@ -20,11 +21,11 @@ class Verifier: public QWidget
 		virtual ~Verifier();
 
 	public Q_SLOTS:
+		void logMessage(QtMsgType _type, QString _msg);
+
 	Q_SIGNALS:
-		void startHashing(QString _path);
-		void cancelHashing();
+		void startHashing(QString _path, bool _generate);
 		void resetHashing();
-		void changeMode(bool _generate);
 
 		void getMissing();
 		void getNew();
@@ -35,25 +36,36 @@ class Verifier: public QWidget
 	protected:
 		void createLayout();
 
+		void doCheckState();
 
 	protected Q_SLOTS:
-		void doSelectPath();
-		void doAction();
-		void doChangeMode(int _mode);
+		void doSelectSource();
+		void doSelectDestination();
+		void doCompare();
+		void doGetResults();
+		void doCopy();
 
 		void receive_info(QString _message);
+		void receive_missing(QString _message);
+		void receive_new(QString _new);
 
 	private:
-		QLabel* labelPath;
-		QPushButton* buttonPathSelector;
-		QPushButton* buttonAction;
-		QPushButton* buttonGetMissing;
-		QPushButton* buttonGetNew;
-		QPushButton* buttonCopyMissing;
+		QGroupBox* boxSource;
+		QLabel* labelSourcePath;
+		QPushButton* buttonSourceSelect;
+		QTextEdit* editSource;
+
+		QGroupBox* boxDestination;
+		QLabel* labelDestinationPath;
+		QPushButton* buttonDestinationSelect;
+		QTextEdit* editDestination;
+
+		QPushButton* buttonCompare;
+		QPushButton* buttonGetResults;
+		QPushButton* buttonCopy;
 
 		QTextEdit* labelLog;
-		QCheckBox* checkGeneration;
-
+		
 		HashCoordinator hasher;
 		QThread hashThread;
 	private Q_SLOTS:

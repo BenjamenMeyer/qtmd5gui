@@ -1,12 +1,14 @@
 #include <verifier.h>
 
 #include <QtCore/QtCore>
+#include <QtCore/QtGlobal>
 #include <QtCore/QDir>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
 #include <QtGui/QCheckBox>
 #include <QtGui/QFileDialog>
 #include <QtGui/QFrame>
+#include <QtGui/QGroupBox>
 #include <QtGui/QHBoxLayout>
 #include <QtGui/QLabel>
 #include <QtGui/QMessageBox>
@@ -14,39 +16,48 @@
 #include <QtGui/QTextEdit>
 #include <QtGui/QVBoxLayout>
 
-Verifier::Verifier(QWidget* _parent) : QWidget(_parent, 0)
+Verifier* instance = NULL;
+
+void messageCapture(QtMsgType _type, const char* _msg)
 	{
-	labelPath = NULL;
-	buttonPathSelector = NULL;
-	buttonAction = NULL;
-	buttonGetMissing = NULL;
-	buttonGetNew = NULL;
-	buttonCopyMissing = NULL;
-	labelLog = NULL;
-	checkGeneration = NULL;
+	QString msg(_msg);
+	if (instance != NULL)
+		{
+		instance->logMessage(_type, msg);
+		}
+	}
+
+Verifier::Verifier(QWidget* _parent) : QWidget(_parent, 0),
+		boxSource(NULL), labelSourcePath(NULL), buttonSourceSelect(NULL), editSource(NULL),
+		boxDestination(NULL), labelDestinationPath(NULL), buttonDestinationSelect(NULL), editDestination(NULL),
+		buttonCompare(NULL), buttonGetResults(NULL), buttonCopy(NULL),
+		labelLog(NULL)
+	{
+	instance = this;
+	qInstallMsgHandler(messageCapture);
 
 	setWindowTitle("Qt File Verifier");
 	createLayout();
 
-	connect(this, SIGNAL(startHashing(QString)),
-	        &hasher, SLOT(startHashing(QString)));
-	connect(this, SIGNAL(cancelHashing()),
-	        &hasher, SIGNAL(cancelHashing()));
+	connect(this, SIGNAL(startHashing(QString, bool)),
+	        &hasher, SLOT(startHashing(QString, bool)));
 	connect(this, SIGNAL(resetHashing()),
 	        &hasher, SIGNAL(resetHashing()));
-	connect(this, SIGNAL(changeMode(bool)),
-	        &hasher, SLOT(changeMode(bool)));
 
 	connect(this, SIGNAL(getMissing()),
-	        &hasher, SLOT(getMissing()));
+	        &hasher, SIGNAL(getMissing()));
 	connect(this, SIGNAL(getNew()),
-	        &hasher, SLOT(getNew()));
+	        &hasher, SIGNAL(getNew()));
 	connect(this, SIGNAL(copyMissing()),
-	        &hasher, SLOT(copyMissing()));
+	        &hasher, SIGNAL(copyMissing()));
 	connect(this, SIGNAL(resetDatabase()),
-	        &hasher, SLOT(resetDatabase()));
+	        &hasher, SIGNAL(resetDatabase()));
 	connect(&hasher, SIGNAL(send_message(QString)),
 	        this, SLOT(receive_info(QString)));
+	connect(&hasher, SIGNAL(send_missing(QString)),
+	        this, SLOT(receive_missing(QString)));
+	connect(&hasher, SIGNAL(send_new(QString)),
+	        this, SLOT(receive_new(QString)));
 
 	hasher.moveToThread(&hashThread);
 	hashThread.start();
@@ -63,74 +74,167 @@ void Verifier::createLayout()
 	QVBoxLayout* masterLayout = new QVBoxLayout();
 	if (masterLayout != NULL)
 		{
-		QHBoxLayout* pathLayout = new QHBoxLayout();
-		if (pathLayout != NULL)
+		QHBoxLayout* comparisonLayout = new QHBoxLayout();
+		if (comparisonLayout != NULL)
 			{
-			labelPath = new QLabel("");
-			if (labelPath != NULL)
+			QVBoxLayout* sourceLayout = new QVBoxLayout();
+			if (sourceLayout != NULL)
 				{
-				labelPath->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-				labelPath->setFrameStyle(15);
-				labelPath->setFrameShadow(QFrame::Sunken);
-				pathLayout->addWidget(labelPath);
+				if (boxSource == NULL)
+					{
+					boxSource = new QGroupBox("Source");
+					}
+				if (boxSource != NULL)
+					{
+					QVBoxLayout* boxLayout = new QVBoxLayout();
+					if (boxLayout != NULL)
+						{
+						QHBoxLayout* selectionLayout = new QHBoxLayout();
+						if (selectionLayout != NULL)
+							{
+							if (labelSourcePath == NULL)
+								{
+								labelSourcePath = new QLabel();
+								}
+							if (labelSourcePath != NULL)
+								{
+								labelSourcePath->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+								labelSourcePath->setFrameStyle(15);
+								labelSourcePath->setFrameShadow(QFrame::Sunken);
+
+								selectionLayout->addWidget(labelSourcePath);
+								}
+
+							if (buttonSourceSelect == NULL)
+								{
+								buttonSourceSelect = new QPushButton("Select");
+								}
+							if (buttonSourceSelect != NULL)
+								{
+								connect(buttonSourceSelect, SIGNAL(clicked()),
+								        this, SLOT(doSelectSource()));
+
+								selectionLayout->addWidget(buttonSourceSelect);
+								}
+
+							boxLayout->addLayout(selectionLayout);
+							}
+
+						if (editSource == NULL)
+							{
+							editSource = new QTextEdit();
+							}
+						if (editSource != NULL)
+							{
+							boxLayout->addWidget(editSource);
+							}
+						boxSource->setLayout(boxLayout);
+						}
+
+					sourceLayout->addWidget(boxSource);
+					}
+
+				comparisonLayout->addLayout(sourceLayout);
 				}
 
-			buttonPathSelector = new QPushButton("Select Path");
-			if (buttonPathSelector != NULL)
+			QVBoxLayout* destinationLayout = new QVBoxLayout();
+			if (destinationLayout != NULL)
 				{
-				connect(buttonPathSelector, SIGNAL(clicked()),
-				        this, SLOT(doSelectPath()));
-				pathLayout->addWidget(buttonPathSelector);
+				if (boxDestination == NULL)
+					{
+					boxDestination = new QGroupBox("Destination");
+					}
+				if (boxDestination != NULL)
+					{
+					QVBoxLayout* boxLayout = new QVBoxLayout();
+					if (boxLayout != NULL)
+						{
+						QHBoxLayout* selectionLayout = new QHBoxLayout();
+						if (selectionLayout != NULL)
+							{
+							if (labelDestinationPath == NULL)
+								{
+								labelDestinationPath = new QLabel();
+								}
+							if (labelDestinationPath != NULL)
+								{
+								labelDestinationPath->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+								labelDestinationPath->setFrameStyle(15);
+								labelDestinationPath->setFrameShadow(QFrame::Sunken);
+
+								selectionLayout->addWidget(labelDestinationPath);
+								}
+
+							if (buttonDestinationSelect == NULL)
+								{
+								buttonDestinationSelect = new QPushButton("Select");
+								}
+							if (buttonDestinationSelect != NULL)
+								{
+								connect(buttonDestinationSelect, SIGNAL(clicked()),
+								        this, SLOT(doSelectDestination()));
+
+								selectionLayout->addWidget(buttonDestinationSelect);
+								}
+
+							boxLayout->addLayout(selectionLayout);
+							}
+
+						if (editDestination == NULL)
+							{
+							editDestination = new QTextEdit();
+							}
+						if (editDestination != NULL)
+							{
+							boxLayout->addWidget(editDestination);
+							}
+
+						boxDestination->setLayout(boxLayout);
+						}
+
+					destinationLayout->addWidget(boxDestination);
+					}
+
+				comparisonLayout->addLayout(destinationLayout);
 				}
 
-			masterLayout->addLayout(pathLayout);
-			}
-
-		checkGeneration = new QCheckBox("Validate");
-		if (checkGeneration != NULL)
-			{
-			checkGeneration->setChecked(false);
-			connect(checkGeneration, SIGNAL(stateChanged(int)),
-			        this, SLOT(doChangeMode(int)));
-			masterLayout->addWidget(checkGeneration);
+			masterLayout->addLayout(comparisonLayout);
 			}
 
 		QHBoxLayout* commandLayout = new QHBoxLayout();
 		if (commandLayout != NULL)
 			{
-			buttonAction = new QPushButton("Start");
-			if (buttonAction != NULL)
+			if (buttonCompare == NULL)
 				{
-				buttonAction->setEnabled(false);
-				connect(buttonAction, SIGNAL(clicked()),
-						this, SLOT(doAction()));
-				commandLayout->addWidget(buttonAction);
+				buttonCompare = new QPushButton("Compare");
+				}
+			if (buttonCompare != NULL)
+				{
+				connect(buttonCompare, SIGNAL(clicked()),
+				        this, SLOT(doCompare()));
+				commandLayout->addWidget(buttonCompare);
 				}
 
-			buttonGetMissing = new QPushButton("Report Missing");
-			if (buttonGetMissing != NULL)
+			if (buttonGetResults == NULL)
 				{
-				buttonGetMissing->setEnabled(false);
-				connect(buttonGetMissing, SIGNAL(clicked()),
-				        this, SIGNAL(getMissing()));
-				commandLayout->addWidget(buttonGetMissing);
+				buttonGetResults = new QPushButton("Results");
+				}
+			if (buttonGetResults != NULL)
+				{
+				connect(buttonGetResults, SIGNAL(clicked()),
+				        this, SLOT(doGetResults()));
+				commandLayout->addWidget(buttonGetResults);
 				}
 
-			buttonGetNew = new QPushButton("Report New");
-			if (buttonGetNew != NULL)
+			if (buttonCopy == NULL)
 				{
-				buttonGetNew->setEnabled(false);
-				connect(buttonGetNew, SIGNAL(clicked()),
-				        this, SIGNAL(getNew()));
-				commandLayout->addWidget(buttonGetNew);
+				buttonCopy = new QPushButton("Copy");
 				}
-
-			buttonCopyMissing = new QPushButton("Copy Missing");
-			if (buttonCopyMissing != NULL)
+			if (buttonCopy != NULL)
 				{
-				buttonCopyMissing->setEnabled(false);
-				connect(buttonCopyMissing, SIGNAL(clicked()),
-				        this, SIGNAL(copyMissing()));
+				connect(buttonCopy, SIGNAL(clicked()),
+				        this, SLOT(doCopy()));
+				commandLayout->addWidget(buttonCopy);
 				}
 
 			masterLayout->addLayout(commandLayout);
@@ -146,88 +250,85 @@ void Verifier::createLayout()
 		}
 	}
 
-void Verifier::doSelectPath()
+void Verifier::logMessage(QtMsgType _type, QString _msg)
 	{
-	QString selectedDirectory = QFileDialog::getExistingDirectory(this, "Select directory", QDir::currentPath(), QFileDialog::ShowDirsOnly);
-	labelPath->setText(selectedDirectory);
-	buttonAction->setEnabled(!selectedDirectory.isEmpty());
-	}
-
-void Verifier::doAction()
-	{
-	QString currentStatus = buttonAction->text();
-
-	bool generate = true;
-	if (checkGeneration != NULL)
+	switch (_type)
 		{
-		switch (checkGeneration->checkState())
-			{
-			case Qt::Unchecked:
-				generate = false;
-				break;
-
-			default:
-			case Qt::Checked:
-				generate = true;
-				break;
-			};
-		}
-
-	if (currentStatus == "Start")
-		{
-		Q_EMIT startHashing(labelPath->text());
-		buttonAction->setText("Stop");
-
-		buttonGetMissing->setEnabled(false);
-		buttonGetNew->setEnabled(false);
-		buttonCopyMissing->setEnabled(false);
-		}
-	else if (currentStatus == "Stop")
-		{
-		Q_EMIT cancelHashing();
-		buttonAction->setText("Reset");
-
-		buttonGetMissing->setEnabled(false);
-		buttonGetNew->setEnabled(false);
-		buttonCopyMissing->setEnabled(false);
-		}
-	else
-		{
-		Q_EMIT resetHashing();
-		buttonAction->setText("Start");
-
-		buttonGetMissing->setEnabled(!generate);
-		buttonGetNew->setEnabled(!generate);
-		buttonCopyMissing->setEnabled(!generate);
-
-		if (generate)
-			{
-			Q_EMIT resetDatabase();
-			}
-		}
-	}
-
-void Verifier::doChangeMode(int _state)
-	{
-	switch (_state)
-		{
-		case Qt::Unchecked:
-			qDebug() << "Mode: Generate";
-			Q_EMIT changeMode(true);
-			break;
-
-		default:
-		case Qt::Checked:
-			qDebug() << "Mode: Validate";
-			Q_EMIT changeMode(false);
-			break;
+		case QtDebugMsg:	_msg.prepend("Debug   :");	break;
+		case QtWarningMsg:	_msg.prepend("Warning :");	break;
+		case QtCriticalMsg:	_msg.prepend("Critical:");	break;
+		case QtFatalMsg:	_msg.prepend("Fatal   :");	break;
+		default:			_msg.prepend("Unknown :");	break;
 		};
+	receive_info(_msg);
 	}
-
 void Verifier::receive_info(QString _message)
 	{
 	if (labelLog != NULL)
 		{
 		labelLog->append(_message);
 		}
+	}
+
+void Verifier::doSelectSource()
+	{
+	QString selectedDirectory = QFileDialog::getExistingDirectory(this, "Select Source directory", QDir::currentPath(), QFileDialog::ShowDirsOnly);
+	labelSourcePath->setText(selectedDirectory);
+	doCheckState();
+	}
+void Verifier::doSelectDestination()
+	{
+	QString selectedDirectory = QFileDialog::getExistingDirectory(this, "Select Destination directory", QDir::currentPath(), QFileDialog::ShowDirsOnly);
+	labelDestinationPath->setText(selectedDirectory);
+	doCheckState();
+	}
+void Verifier::doCheckState()
+	{
+	QString source;
+	QString destination;
+	if (labelSourcePath != NULL)
+		{
+		source = labelSourcePath->text();
+		}
+	if (labelDestinationPath != NULL)
+		{
+		destination = labelDestinationPath->text();
+		}
+
+	if (source.isEmpty() == false && destination.isEmpty() == false)
+		{
+		// enable compare button
+		}
+	}
+
+void Verifier::doCompare()
+	{
+	QString source;
+	QString destination;
+	if (labelSourcePath != NULL)
+		{
+		source = labelSourcePath->text();
+		}
+	if (labelDestinationPath != NULL)
+		{
+		destination = labelDestinationPath->text();
+		}
+
+	Q_EMIT resetDatabase();
+	Q_EMIT startHashing(source, true);
+	Q_EMIT startHashing(destination, false);
+	}
+void Verifier::doGetResults()
+	{
+	Q_EMIT getMissing();
+	Q_EMIT getNew();
+	}
+void Verifier::receive_missing(QString _message)
+	{
+	}
+void Verifier::receive_new(QString _new)
+	{
+	}
+void Verifier::doCopy()
+	{
 	}

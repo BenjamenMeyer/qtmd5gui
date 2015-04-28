@@ -1,9 +1,10 @@
 #include <file_hasher.h>
 
 #include <QtCore/QCryptographicHash>
+#include <QtCore/QDebug>
 #include <QtCore/QFile>
 
-FileHasher::FileHasher(QObject* _parent) : QObject(_parent), modulo(0)
+FileHasher::FileHasher(QObject* _parent) : QObject(_parent), modulo(0), cancelled(false)
 	{
 	}
 FileHasher::~FileHasher()
@@ -16,20 +17,27 @@ int FileHasher::getModulo() const
 	}
 void FileHasher::setModulo(int _m)
 	{
+	qDebug() << " Hashing Thread [ " << modulo << "] -> " << _m;
 	modulo = _m;
+	qDebug() << " Hashing Thread [ " << modulo << "] configured";
 	}
 
 void FileHasher::processFile(int _modulo, QString _path, bool _generate)
 	{
+	qDebug() << "Hashing Thread [" << modulo << "] - Received (" << _modulo << ", " << _path << ", " << _generate << ")";
 	if (cancelled)
 		{
+		qDebug() << "Hashing Thread [" << modulo << "] - all jobs cancelled; ignoring - (" << _modulo << ", " << _path << ", " << _generate << ")";
 		return;
 		}
 
 	if (_modulo != modulo)
 		{
+		qDebug() << "Hashing Thread [" << modulo << "] - job not mine; ignoring - (" << _modulo << ", " << _path << ", " << _generate << ")";
 		return;
 		}
+
+	qDebug() << "Hashing Thread [" << modulo << "] - job accepted - (" << _modulo << ", " << _path << ", " << _generate << ")";
 
 	QCryptographicHash hasher(QCryptographicHash::Sha1);
 
@@ -54,6 +62,8 @@ void FileHasher::processFile(int _modulo, QString _path, bool _generate)
 		QByteArray hash_value = hasher.result();
 		Q_EMIT fileData(_path, hash_value.toHex(), _generate);
 		}
+
+	qDebug() << "Hashing Thread [" << modulo << "] - job completed - (" << _modulo << ", " << _path << ", " << _generate << ")";
 	}
 void FileHasher::receive_cancelHashing()
 	{

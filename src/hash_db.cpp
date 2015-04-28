@@ -9,11 +9,19 @@
 #include <QtSql/QSqlError>
 
 QStringList schemas = (
-		QStringList() <<
+	QStringList() <<
 		QString("CREATE TABLE IF NOT EXISTS master_directory (hash TEXT NOT NULL PRIMARY KEY, path TEXT NOT NULL)") <<
 		QString("CREATE TEMPORARY TABLE IF NOT EXISTS checked_directory (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, hash TEXT NOT NULL, path TEXT NOT NULL)") <<
 		QString("CREATE TABLE IF NOT EXISTS master_files (hash TEXT NOT NULL PRIMARY KEY, path TEXT NOT NULL)") <<
 		QString("CREATE TEMPORARY TABLE IF NOT EXISTS checked_files (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, hash TEXT NOT NULL, path TEXT NOT NULL)")
+);
+
+QStringList resetSchemas = (
+	QStringList() <<
+		QString("DROP TABLE checked_files") <<
+		QString("DROP TABLE master_files") <<
+		QString("DROP TABLE checked_directory") <<
+		QString("DROP TABLE master_directory")
 );
 
 #define MAKE_QT_SQL_STATEMENT(name, the_db, the_statement)	\
@@ -62,6 +70,26 @@ void HashDb::init_database()
 			 if (!setup.exec())
 			 	{
 				qDebug() << "Failed to create table...";
+				qDebug() << "Query: " << setup.executedQuery();
+				qDebug() << "Error: " << setup.lastError();
+				}
+			setup.clear();
+			 }
+		 }
+	}
+void HashDb::resetDatabase()
+	{
+	if (db.isOpen())
+		{
+		for (QStringList::iterator iter = resetSchemas.begin();
+			 iter != resetSchemas.end();
+			 ++iter)
+			 {
+			 QSqlQuery setup(db);
+			 setup.prepare((*iter));
+			 if (!setup.exec())
+			 	{
+				qDebug() << "Failed to drop table...";
 				qDebug() << "Query: " << setup.executedQuery();
 				qDebug() << "Error: " << setup.lastError();
 				}
@@ -145,5 +173,8 @@ void HashDb::generateMissingObjects()
 	{
 	}
 void HashDb::generateNewObjects()
+	{
+	}
+void HashDb::copyMissingObjects()
 	{
 	}

@@ -19,14 +19,7 @@ class HashCoordinator : public QObject
 		~HashCoordinator();
 
 	public Q_SLOTS:
-		void startHashing(QString _path);
-		void changeMode(bool _generate);
-
-		void getMissing();
-		void getNew();
-		void copyMissing();
-
-		void resetDatabase();
+		void startHashing(QString _path, bool _generate);
 
 	Q_SIGNALS:
 		void processDirectory(QString _path, bool _mode);
@@ -38,19 +31,27 @@ class HashCoordinator : public QObject
 		void hashing_started();
 		void hashing_pending();
 
+		void getMissing();
+		void getNew();
+		void copyMissing();
+
+		void resetDatabase();
+
 		void send_message(QString _message);
+		void send_missing(QString _message);
+		void send_new(QString _new);
 
 	protected:
 		bool cancelled;
 
+		void hash_directory(QString _path, bool _mode);
+
 	protected Q_SLOTS:
-		void startHashing(QString _path, bool _mode);
+		void doHashDirectory(QString _path, bool _mode);
 
 		void receive_hash(QString _path, QByteArray _hash_value, bool _generate);
 		void receive_cancelHashing();
 		void receive_resetHashing();
-
-		void hash_directory(QString _path);
 
 	private:
 		struct ht
@@ -68,7 +69,6 @@ class HashCoordinator : public QObject
 		struct hc copiers[COPIER_THREAD_COUNT];
 
 		HashDb db;
-		bool generate;
 
 	private Q_SLOTS:
 	};

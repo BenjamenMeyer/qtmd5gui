@@ -18,9 +18,14 @@ class HashDb : public QObject
 
 		void generateMissingObjects();
 		void generateNewObjects();
+		void copyMissingObjects();
+
+		void resetDatabase();
 
 	Q_SIGNALS:
 		void message(QString);
+		void message_missing(QString _message);
+		void message_new(QString _new);
 		void copyFile(QString _source_path, QString _destination_path);
 
 	protected:
