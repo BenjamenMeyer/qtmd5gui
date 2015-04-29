@@ -8,8 +8,8 @@
 #include <file_hasher.h>
 #include <hash_db.h>
 
-#define COPIER_THREAD_COUNT		20
-#define HASHER_THREAD_COUNT		10
+#define COPIER_THREAD_COUNT		1
+#define HASHER_THREAD_COUNT		1
 
 class HashCoordinator : public QObject
 	{

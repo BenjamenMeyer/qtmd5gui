@@ -34,7 +34,7 @@ Verifier::Verifier(QWidget* _parent) : QWidget(_parent, 0),
 		labelLog(NULL)
 	{
 	instance = this;
-	qInstallMsgHandler(messageCapture);
+	// qInstallMsgHandler(messageCapture);
 
 	setWindowTitle("Qt File Verifier");
 	createLayout();
@@ -53,11 +53,14 @@ Verifier::Verifier(QWidget* _parent) : QWidget(_parent, 0),
 	connect(this, SIGNAL(resetDatabase()),
 	        &hasher, SIGNAL(resetDatabase()));
 	connect(&hasher, SIGNAL(send_message(QString)),
-	        this, SLOT(receive_info(QString)));
+	        this, SLOT(receive_info(QString)),
+			Qt::QueuedConnection);
 	connect(&hasher, SIGNAL(send_missing(QString)),
-	        this, SLOT(receive_missing(QString)));
+	        this, SLOT(receive_missing(QString)),
+			Qt::QueuedConnection);
 	connect(&hasher, SIGNAL(send_new(QString)),
-	        this, SLOT(receive_new(QString)));
+	        this, SLOT(receive_new(QString)),
+			Qt::QueuedConnection);
 
 	hasher.moveToThread(&hashThread);
 	hashThread.start();
@@ -67,6 +70,7 @@ Verifier::~Verifier()
 	{
 	hashThread.quit();
 	hashThread.wait();
+	instance = NULL;
 	}
 
 void Verifier::createLayout()
@@ -264,7 +268,7 @@ void Verifier::logMessage(QtMsgType _type, QString _msg)
 	}
 void Verifier::receive_info(QString _message)
 	{
-	if (labelLog != NULL)
+	if (labelLog != NULL && _message.isEmpty() == false)
 		{
 		labelLog->append(_message);
 		}

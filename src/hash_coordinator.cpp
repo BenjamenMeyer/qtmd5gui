@@ -1,6 +1,5 @@
 #include <hash_coordinator.h>
 
-#include <QtCore/QDebug>
 #include <QtCore/QDir>
 #include <QtCore/QTimer>
 #include <QtCore/QString>
@@ -15,11 +14,14 @@ HashCoordinator::HashCoordinator(QObject* _parent) : cancelled(false)
 	connect(this, SIGNAL(resetHashing()),
 	        this, SLOT(receive_resetHashing()));
 	connect(&db, SIGNAL(message(QString)),
-	        this, SIGNAL(send_message(QString)));
+	        this, SIGNAL(send_message(QString)),
+			Qt::QueuedConnection);
 	connect(&db, SIGNAL(message_missing(QString)),
-	        this, SIGNAL(send_missing(QString)));
+	        this, SIGNAL(send_missing(QString)),
+			Qt::QueuedConnection);
 	connect(&db, SIGNAL(message_new(QString)),
-	        this, SIGNAL(send_new(QString)));
+	        this, SIGNAL(send_new(QString)),
+			Qt::QueuedConnection);
 
 	connect(this, SIGNAL(getMissing()),
 	        &db, SLOT(generateMissingObjects()));

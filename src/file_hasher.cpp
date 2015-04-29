@@ -1,7 +1,6 @@
 #include <file_hasher.h>
 
 #include <QtCore/QCryptographicHash>
-#include <QtCore/QDebug>
 #include <QtCore/QFile>
 
 FileHasher::FileHasher(QObject* _parent) : QObject(_parent), modulo(0), cancelled(false)
@@ -17,27 +16,27 @@ int FileHasher::getModulo() const
 	}
 void FileHasher::setModulo(int _m)
 	{
-	qDebug() << " Hashing Thread [ " << modulo << "] -> " << _m;
+	Q_EMIT send_message(QString(" Hashing Thread [%1] -> %2").arg(modulo).arg(_m));
 	modulo = _m;
-	qDebug() << " Hashing Thread [ " << modulo << "] configured";
+	Q_EMIT send_message(QString(" Hashing Thread [%1] configured").arg(modulo));
 	}
 
 void FileHasher::processFile(int _modulo, QString _path, bool _generate)
 	{
-	qDebug() << "Hashing Thread [" << modulo << "] - Received (" << _modulo << ", " << _path << ", " << _generate << ")";
-	if (cancelled)
-		{
-		qDebug() << "Hashing Thread [" << modulo << "] - all jobs cancelled; ignoring - (" << _modulo << ", " << _path << ", " << _generate << ")";
-		return;
-		}
-
+	Q_EMIT send_message(QString("Hashing Thread [%1] - Received (%2, %3, %4)").arg(modulo).arg(_modulo).arg(_path).arg(_generate));
 	if (_modulo != modulo)
 		{
-		qDebug() << "Hashing Thread [" << modulo << "] - job not mine; ignoring - (" << _modulo << ", " << _path << ", " << _generate << ")";
+		//Q_EMIT send_message(QString("Hashing Thread [%1] - job not mine; ignoring - (%2, %3, %4)").arg(modulo).arg(_modulo).arg(_path).arg(_generate));
 		return;
 		}
 
-	qDebug() << "Hashing Thread [" << modulo << "] - job accepted - (" << _modulo << ", " << _path << ", " << _generate << ")";
+	if (cancelled)
+		{
+		Q_EMIT send_message(QString("Hashing Thread [%1] - all jobs cancelled; ignoring - (%2, %3, %4)").arg(modulo).arg(_modulo).arg(_path).arg(_generate));
+		return;
+		}
+
+	Q_EMIT send_message(QString("Hashing Thread [%1] - job accepted - (%2, %3, %4)").arg(modulo).arg(_modulo).arg(_path).arg(_generate));
 
 	QCryptographicHash hasher(QCryptographicHash::Sha1);
 
@@ -63,7 +62,7 @@ void FileHasher::processFile(int _modulo, QString _path, bool _generate)
 		Q_EMIT fileData(_path, hash_value.toHex(), _generate);
 		}
 
-	qDebug() << "Hashing Thread [" << modulo << "] - job completed - (" << _modulo << ", " << _path << ", " << _generate << ")";
+	Q_EMIT send_message(QString("Hashing Thread [%1] - job completed - (%2, %3, %4)").arg(modulo).arg(_modulo).arg(_path).arg(_generate));
 	}
 void FileHasher::receive_cancelHashing()
 	{

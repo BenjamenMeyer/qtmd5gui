@@ -1,8 +1,8 @@
 #include <hash_db.h>
 
-#include <QtCore/QDebug>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
+#include <QtCore/QVariant>
 
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
@@ -24,18 +24,19 @@ QStringList resetSchemas = (
 		QString("DROP TABLE master_directory")
 );
 
-#define MAKE_QT_SQL_STATEMENT(name, the_db, the_statement)	\
-	name = QSqlQuery(the_db); 								\
-    if (!name.prepare(the_statement))						\
-		{													\
-		qDebug() << "Failed to prepare " << the_statement;	\
-		qDebug() << "Error: " << name.lastError();			\
+#define MAKE_QT_SQL_STATEMENT(name, the_db, the_statement)					\
+	name = QSqlQuery(the_db); 												\
+    if (!name.prepare(the_statement))										\
+		{																	\
+		Q_EMIT message(QString("Failed to prepare %1").arg(the_statement));	\
+		Q_EMIT message(QString("Error: %1").arg(name.lastError().text()));	\
 		}
 
 HashDb::HashDb(QObject* _parent) : QObject(_parent)
 	{
 	db = QSqlDatabase::addDatabase("QSQLITE");
-	db.setDatabaseName(":memory:");
+	// db.setDatabaseName(":memory:");
+	db.setDatabaseName("test_db.sqlite");
 	db.open();
 	init_database();
 	MAKE_QT_SQL_STATEMENT(SQL_INSERT_DIRECTORY, db, "INSERT INTO master_directory (hash, path) VALUES(:hash, :path);");
@@ -69,11 +70,12 @@ void HashDb::init_database()
 			 setup.prepare((*iter));
 			 if (!setup.exec())
 			 	{
-				qDebug() << "Failed to create table...";
-				qDebug() << "Query: " << setup.executedQuery();
-				qDebug() << "Error: " << setup.lastError();
+				Q_EMIT message("Failed to create table...");
+				Q_EMIT message(QString("Query: %1").arg(setup.executedQuery()));
+				Q_EMIT message(QString("Error: %1").arg(setup.lastError().text()));
 				}
-			setup.clear();
+			 setup.clear();
+			 db.commit();
 			 }
 		 }
 	}
@@ -89,11 +91,12 @@ void HashDb::resetDatabase()
 			 setup.prepare((*iter));
 			 if (!setup.exec())
 			 	{
-				qDebug() << "Failed to drop table...";
-				qDebug() << "Query: " << setup.executedQuery();
-				qDebug() << "Error: " << setup.lastError();
+				Q_EMIT message("Failed to drop table...");
+				Q_EMIT message(QString("Query: %1").arg(setup.executedQuery()));
+				Q_EMIT message(QString("Error: %1").arg(setup.lastError().text()));
 				}
-			setup.clear();
+	  		 setup.clear();
+			 db.commit();
 			 }
 		 }
 	}
@@ -105,15 +108,15 @@ void HashDb::addDirectory(QString _path, QByteArray _hash, bool _generate)
 		QSqlQuery insertion;
 		if (_generate)
 			{
-			qDebug() << "Mode: Generate";
+			Q_EMIT message("Mode: Generate");
 			insertion = SQL_INSERT_DIRECTORY;
 			}
 		else
 			{
-			qDebug() << "Mode: Validate";
+			Q_EMIT message("Mode: Validate");
 			insertion = SQL_CHECK_INSERT_DIRECTORY;
 			}
-		insertion.bindValue(":hash", _hash);
+		insertion.bindValue(":hash", QVariant(_hash));
 		insertion.bindValue(":path", _path);
 		if (insertion.exec())
 			{
@@ -121,15 +124,15 @@ void HashDb::addDirectory(QString _path, QByteArray _hash, bool _generate)
 			}
 		else
 			{
-			qDebug() << "Failed to insert directory " << _path << " with hash " << _hash << " into database";
-			qDebug() << "Query: " << insertion.executedQuery();
+			Q_EMIT message(QString("Failed to insert directory %1 with hash %2 into database").arg(_path).arg(QString(_hash)));
+			Q_EMIT message(QString("Query: %1").arg(insertion.executedQuery()));
 			QMapIterator<QString, QVariant> bv = insertion.boundValues();
 			while(bv.hasNext())
 				{
 				bv.next();
-				qDebug() << "Mapped - Key: " << bv.key() << ", Value: "<< bv.value();
+				Q_EMIT message(QString("Mapped - Key: %1, Value: %2").arg(bv.key()).arg(bv.value().toString()));
 				}
-			qDebug() << "Error: " << insertion.lastError();
+			Q_EMIT message(QString("Error: %1").arg(insertion.lastError().text()));
 			}
 		}
 	}
@@ -141,12 +144,12 @@ void HashDb::addFile(QString _path, QByteArray _hash, bool _generate)
 		QSqlQuery insertion(db);
 		if (_generate)
 			{
-			qDebug() << "Mode: Generate";
+			Q_EMIT message("Mode: Generate");
 			insertion = SQL_INSERT_FILE;
 			}
 		else
 			{
-			qDebug() << "Mode: Validate";
+			Q_EMIT message("Mode: Validate");
 			insertion = SQL_CHECK_INSERT_FILE;
 			}
 		insertion.bindValue(":hash", _hash);
@@ -157,15 +160,15 @@ void HashDb::addFile(QString _path, QByteArray _hash, bool _generate)
 			}
 		else
 			{
-			qDebug() << "Failed to insert file " << _path << " with hash " << _hash << " into database";
-			qDebug() << "Query: " << insertion.executedQuery();
+			Q_EMIT message(QString("Failed to insert file %1 with hash %2 into database").arg(_path).arg(QString(_hash)));
+			Q_EMIT message(QString("Query: %1").arg(insertion.executedQuery()));
 			QMapIterator<QString, QVariant> bv = insertion.boundValues();
 			while(bv.hasNext())
 				{
 				bv.next();
-				qDebug() << "Mapped - Key: " << bv.key() << ", Value: "<< bv.value();
+				Q_EMIT message(QString("Mapped - Key: %1, Value: %2").arg(bv.key(), bv.value().toString()));
 				}
-			qDebug() << "Error: " << insertion.lastError();
+			Q_EMIT message(QString("Error: %1").arg(insertion.lastError().text()));
 			}
 		}
 	}

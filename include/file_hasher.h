@@ -21,6 +21,7 @@ class FileHasher : public QObject
 
 	Q_SIGNALS:
 		void fileData(QString _path, QByteArray _hash, bool _generate);
+		void send_message(QString _message);
 
 	protected:
 		int modulo;
