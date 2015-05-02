@@ -212,6 +212,24 @@ void HashDb::generateMissingObjects()
 	}
 void HashDb::generateNewObjects()
 	{
+	if (db.isOpen())
+		{
+		int col_path = 1;
+		if (SQL_NEW_FILES.exec())
+			{
+			while (SQL_NEW_FILES.next())
+				{
+				QString path = SQL_NEW_FILES.value(col_path).toString();
+				Q_EMIT message_new(path);
+				}
+			}
+		else
+			{
+			Q_EMIT message(QString("Failed to retrieve new records from the database"));
+			Q_EMIT message(QString("Query: %1").arg(SQL_NEW_FILES.executedQuery()));
+			Q_EMIT message(QString("Error: %1").arg(SQL_NEW_FILES.lastError().text()));
+			}
+		}
 	}
 void HashDb::copyMissingObjects()
 	{
