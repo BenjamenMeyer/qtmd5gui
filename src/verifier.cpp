@@ -4,11 +4,8 @@
 #include <QtCore/QtGlobal>
 #include <QtCore/QDir>
 #include <QtCore/QString>
-#include <QtCore/QTimer>
-#include <QtGui/QCheckBox>
+
 #include <QtGui/QFileDialog>
-#include <QtGui/QFrame>
-#include <QtGui/QGroupBox>
 #include <QtGui/QHBoxLayout>
 #include <QtGui/QLabel>
 #include <QtGui/QMessageBox>
@@ -20,6 +17,7 @@ Verifier* instance = NULL;
 
 void messageCapture(QtMsgType _type, const char* _msg)
 	{
+	// qInstallMsgHandler(messageCapture);
 	QString msg(_msg);
 	if (instance != NULL)
 		{
@@ -34,15 +32,16 @@ Verifier::Verifier(QWidget* _parent) : QWidget(_parent, 0),
 		labelLog(NULL)
 	{
 	instance = this;
-	// qInstallMsgHandler(messageCapture);
 
 	setWindowTitle("Qt File Verifier");
 	createLayout();
 
 	connect(this, SIGNAL(startHashing(QString, bool)),
-	        &hasher, SLOT(startHashing(QString, bool)));
+	        &hasher, SLOT(startHashing(QString, bool)),
+			Qt::QueuedConnection);
 	connect(this, SIGNAL(resetHashing()),
-	        &hasher, SIGNAL(resetHashing()));
+	        &hasher, SIGNAL(resetHashing()),
+			Qt::QueuedConnection);
 
 	connect(this, SIGNAL(getMissing()),
 	        &hasher, SIGNAL(getMissing()));
@@ -52,6 +51,7 @@ Verifier::Verifier(QWidget* _parent) : QWidget(_parent, 0),
 	        &hasher, SIGNAL(copyMissing()));
 	connect(this, SIGNAL(resetDatabase()),
 	        &hasher, SIGNAL(resetDatabase()));
+
 	connect(&hasher, SIGNAL(send_message(QString)),
 	        this, SLOT(receive_info(QString)),
 			Qt::QueuedConnection);
@@ -62,14 +62,39 @@ Verifier::Verifier(QWidget* _parent) : QWidget(_parent, 0),
 	        this, SLOT(receive_new(QString)),
 			Qt::QueuedConnection);
 
+
+	connect(this, SIGNAL(send_message(QString)),
+	        &theLog, SLOT(message(QString)),
+			Qt::QueuedConnection);
+	connect(&theLog, SIGNAL(send_message(QString)),
+	        this, SLOT(receive_info(QString)),
+			Qt::QueuedConnection);
+
+	connect(&hasher, SIGNAL(send_message(QString)),
+	        &theLog, SLOT(message(QString)),
+			Qt::QueuedConnection);
+	connect(&hasher, SIGNAL(send_missing(QString)),
+	        &theLog, SLOT(message(QString)),
+			Qt::QueuedConnection);
+	connect(&hasher, SIGNAL(send_new(QString)),
+	        &theLog, SLOT(message(QString)),
+			Qt::QueuedConnection);
+
 	hasher.moveToThread(&hashThread);
 	hashThread.start();
+
+	theLog.setLogFile(QString(".qtfilehasher.log"));
+
+	theLog.moveToThread(&logThread);
+	logThread.start();
 	}
 
 Verifier::~Verifier()
 	{
 	hashThread.quit();
 	hashThread.wait();
+	logThread.quit();
+	logThread.wait();
 	instance = NULL;
 	}
 
@@ -302,6 +327,11 @@ void Verifier::doCheckState()
 	if (source.isEmpty() == false && destination.isEmpty() == false)
 		{
 		// enable compare button
+		Q_EMIT resetDatabase();
+		}
+	else
+		{
+		// disable compare button
 		}
 	}
 
@@ -318,7 +348,6 @@ void Verifier::doCompare()
 		destination = labelDestinationPath->text();
 		}
 
-	Q_EMIT resetDatabase();
 	Q_EMIT startHashing(source, true);
 	Q_EMIT startHashing(destination, false);
 	}
@@ -327,11 +356,19 @@ void Verifier::doGetResults()
 	Q_EMIT getMissing();
 	Q_EMIT getNew();
 	}
-void Verifier::receive_missing(QString _message)
+void Verifier::receive_missing(QString _missing)
 	{
+	if (editSource != NULL && _missing.isEmpty() == false)
+		{
+		editSource->append(_missing);
+		}
 	}
 void Verifier::receive_new(QString _new)
 	{
+	if (editDestination != NULL && _new.isEmpty() == false)
+		{
+		editDestination->append(_new);
+		}
 	}
 void Verifier::doCopy()
 	{

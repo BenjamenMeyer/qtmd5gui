@@ -12,6 +12,7 @@
 #include <QtGui/QWidget>
 
 #include <hash_coordinator.h>
+#include <logger.h>
 
 class Verifier: public QWidget
 	{
@@ -32,6 +33,8 @@ class Verifier: public QWidget
 		void copyMissing();
 
 		void resetDatabase();
+
+		void send_message(QString _message);
 
 	protected:
 		void createLayout();
@@ -68,6 +71,9 @@ class Verifier: public QWidget
 		
 		HashCoordinator hasher;
 		QThread hashThread;
+
+		Logger theLog;
+		QThread logThread;
 	private Q_SLOTS:
 	};
 

@@ -40,9 +40,11 @@ HashCoordinator::HashCoordinator(QObject* _parent) : cancelled(false)
 		connect(this, SIGNAL(resetHashing()),
 				&(hashers[i].hasher), SLOT(receive_resetHashing()));
 		connect(this, SIGNAL(processFile(int, QString, bool)),
-		        &(hashers[i].hasher), SLOT(processFile(int, QString, bool)));
+		        &(hashers[i].hasher), SLOT(processFile(int, QString, bool)),
+				Qt::QueuedConnection);
 		connect(&(hashers[i].hasher), SIGNAL(fileData(QString, QByteArray, bool)),
-		        this, SLOT(receive_hash(QString, QByteArray, bool)));
+		        this, SLOT(receive_hash(QString, QByteArray, bool)),
+				Qt::QueuedConnection);
 
 		hashers[i].hasher.moveToThread(&(hashers[i].thread));
 		hashers[i].thread.start();
@@ -52,7 +54,8 @@ HashCoordinator::HashCoordinator(QObject* _parent) : cancelled(false)
 		{
 		copiers[i].copier.setModulo(i);
 		connect(this, SIGNAL(copyFile(int, QString, QString)),
-		        &(copiers[i].copier), SLOT(copyFile(int, QString, QString)));
+		        &(copiers[i].copier), SLOT(copyFile(int, QString, QString)),
+				Qt::QueuedConnection);
 		copiers[i].copier.moveToThread(&(copiers[i].thread));
 		copiers[i].thread.start();
 		}
