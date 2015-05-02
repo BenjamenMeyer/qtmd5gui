@@ -38,8 +38,7 @@ QStringList resetSchemas = (
 HashDb::HashDb(QObject* _parent) : QObject(_parent)
 	{
 	db = QSqlDatabase::addDatabase("QSQLITE");
-	// db.setDatabaseName(":memory:");
-	db.setDatabaseName("test_db.sqlite");
+	db.setDatabaseName(":memory:");
 	db.open();
 	init_database();
 	MAKE_QT_SQL_STATEMENT(SQL_INSERT_DIRECTORY, db, "INSERT INTO master_directory (hash, path) VALUES(:hash, :path);");
@@ -84,9 +83,11 @@ void HashDb::init_database()
 				Q_EMIT message(QString("Query: %1").arg(setup.executedQuery()));
 				Q_EMIT message(QString("Error: %1").arg(setup.lastError().text()));
 
+				/*
 				qDebug() << "Failed to drop table...";
 				qDebug() << "Query: " << setup.executedQuery();
 				qDebug() << "Error: " << setup.lastError();
+				*/
 				}
 	  		 setup.clear();
 			 db.commit();
