@@ -18,6 +18,7 @@ class FileCopier : public QObject
 		void copyFile(int _modulo, QString _source, QString _destination);
 
 	Q_SIGNALS:
+		void send_message(QString _message);
 
 	protected:
 		int modulo;

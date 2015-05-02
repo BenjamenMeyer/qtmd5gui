@@ -30,9 +30,10 @@ class Verifier: public QWidget
 
 		void getMissing();
 		void getNew();
-		void copyMissing();
+		void copyMissing(QString _source_path, QString _destination_path);
 
 		void resetDatabase();
+		void clearResultDisplay();
 
 		void send_message(QString _message);
 
@@ -66,6 +67,7 @@ class Verifier: public QWidget
 		QPushButton* buttonCompare;
 		QPushButton* buttonGetResults;
 		QPushButton* buttonCopy;
+		QPushButton* buttonReset;
 
 		QTextEdit* labelLog;
 		

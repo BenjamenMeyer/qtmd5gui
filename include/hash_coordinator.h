@@ -8,8 +8,8 @@
 #include <file_hasher.h>
 #include <hash_db.h>
 
-#define COPIER_THREAD_COUNT		1
-#define HASHER_THREAD_COUNT		1
+#define COPIER_THREAD_COUNT		10
+#define HASHER_THREAD_COUNT		20
 
 class HashCoordinator : public QObject
 	{
@@ -33,7 +33,7 @@ class HashCoordinator : public QObject
 
 		void getMissing();
 		void getNew();
-		void copyMissing();
+		void copyMissing(QString _source_path, QString _destination_path);
 
 		void resetDatabase();
 
@@ -48,6 +48,7 @@ class HashCoordinator : public QObject
 
 	protected Q_SLOTS:
 		void doHashDirectory(QString _path, bool _mode);
+		void doCopyFile(int _count, QString _source, QString _destination);
 
 		void receive_hash(QString _path, QByteArray _hash_value, bool _generate);
 		void receive_cancelHashing();

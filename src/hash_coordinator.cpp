@@ -27,8 +27,10 @@ HashCoordinator::HashCoordinator(QObject* _parent) : cancelled(false)
 	        &db, SLOT(generateMissingObjects()));
 	connect(this, SIGNAL(getNew()),
 	        &db, SLOT(generateNewObjects()));
-	connect(this, SIGNAL(copyMissing()),
-	        &db, SLOT(copyMissingObjects()));
+	connect(this, SIGNAL(copyMissing(QString, QString)),
+	        &db, SLOT(copyMissingObjects(QString, QString)));
+	connect(&db, SIGNAL(copyFile(int, QString, QString)),
+	        this, SLOT(doCopyFile(int, QString, QString)));
 	connect(this, SIGNAL(resetDatabase()),
 	        &db, SLOT(resetDatabase()));
 
@@ -56,6 +58,8 @@ HashCoordinator::HashCoordinator(QObject* _parent) : cancelled(false)
 		connect(this, SIGNAL(copyFile(int, QString, QString)),
 		        &(copiers[i].copier), SLOT(copyFile(int, QString, QString)),
 				Qt::QueuedConnection);
+		connect(&(copiers[i].copier), SIGNAL(send_message(QString)),
+		        this, SIGNAL(send_message(QString)));
 		copiers[i].copier.moveToThread(&(copiers[i].thread));
 		copiers[i].thread.start();
 		}
@@ -92,6 +96,12 @@ void HashCoordinator::doHashDirectory(QString _path, bool _mode)
 		return;
 		}
 	hash_directory(_path, _mode);
+	}
+
+void HashCoordinator::doCopyFile(int _count, QString _source, QString _destination)
+	{
+	int copy_index = _count % COPIER_THREAD_COUNT;
+	Q_EMIT copyFile(copy_index, _source, _destination);
 	}
 
 void HashCoordinator::hash_directory(QString _path, bool _generate)

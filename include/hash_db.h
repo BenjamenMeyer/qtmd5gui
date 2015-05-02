@@ -18,7 +18,7 @@ class HashDb : public QObject
 
 		void generateMissingObjects();
 		void generateNewObjects();
-		void copyMissingObjects();
+		void copyMissingObjects(QString _source_path, QString _destination_path);
 
 		void resetDatabase();
 
@@ -26,7 +26,7 @@ class HashDb : public QObject
 		void message(QString);
 		void message_missing(QString _message);
 		void message_new(QString _new);
-		void copyFile(QString _source_path, QString _destination_path);
+		void copyFile(int _modulo, QString _source_path, QString _destination_path);
 
 	protected:
 		QSqlDatabase db;

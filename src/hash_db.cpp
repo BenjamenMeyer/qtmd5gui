@@ -1,6 +1,7 @@
 #include <hash_db.h>
 
 #include <QtCore/QDebug>
+#include <QtCore/QFileInfo>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtCore/QVariant>
@@ -231,6 +232,44 @@ void HashDb::generateNewObjects()
 			}
 		}
 	}
-void HashDb::copyMissingObjects()
+void HashDb::copyMissingObjects(QString _source_path, QString _destination_path)
 	{
+	if (db.isOpen())
+		{
+		int col_path = 1;
+		if (SQL_MISSING_FILES.exec())
+			{
+			int count = 0;
+			while (SQL_MISSING_FILES.next())
+				{
+				QString path = SQL_MISSING_FILES.value(col_path).toString();
+				QString new_path = path;
+				new_path.replace(_source_path, _destination_path);
+
+				QFileInfo source_info(path);
+				QFileInfo destination_info(new_path); 
+
+				/*
+				qDebug() << "Processing Path:  " << path;
+				qDebug() << "       File Name: " << source_info.fileName();
+				qDebug() << "       File Path: " << source_info.absolutePath();
+				qDebug() << "     Source Path: " << _source_path;
+
+				qDebug() << "Generated Path:   " << new_path;
+				qDebug() << "       File Name: " << destination_info.fileName();
+				qDebug() << "       File Path: " << destination_info.absolutePath();
+				qDebug() << "Destination Path: " << _destination_path;
+				*/
+
+				Q_EMIT copyFile(count, path, new_path);
+				++count;
+				}
+			}
+		else
+			{
+			Q_EMIT message(QString("Failed to retrieve missing records from the database"));
+			Q_EMIT message(QString("Query: %1").arg(SQL_MISSING_FILES.executedQuery()));
+			Q_EMIT message(QString("Error: %1").arg(SQL_MISSING_FILES.lastError().text()));
+			}
+		}
 	}

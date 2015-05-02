@@ -28,7 +28,7 @@ void messageCapture(QtMsgType _type, const char* _msg)
 Verifier::Verifier(QWidget* _parent) : QWidget(_parent, 0),
 		boxSource(NULL), labelSourcePath(NULL), buttonSourceSelect(NULL), editSource(NULL),
 		boxDestination(NULL), labelDestinationPath(NULL), buttonDestinationSelect(NULL), editDestination(NULL),
-		buttonCompare(NULL), buttonGetResults(NULL), buttonCopy(NULL),
+		buttonCompare(NULL), buttonGetResults(NULL), buttonCopy(NULL), buttonReset(NULL),
 		labelLog(NULL)
 	{
 	instance = this;
@@ -47,8 +47,8 @@ Verifier::Verifier(QWidget* _parent) : QWidget(_parent, 0),
 	        &hasher, SIGNAL(getMissing()));
 	connect(this, SIGNAL(getNew()),
 	        &hasher, SIGNAL(getNew()));
-	connect(this, SIGNAL(copyMissing()),
-	        &hasher, SIGNAL(copyMissing()));
+	connect(this, SIGNAL(copyMissing(QString, QString)),
+	        &hasher, SIGNAL(copyMissing(QString, QString)));
 	connect(this, SIGNAL(resetDatabase()),
 	        &hasher, SIGNAL(resetDatabase()));
 
@@ -155,6 +155,8 @@ void Verifier::createLayout()
 							}
 						if (editSource != NULL)
 							{
+							connect(this, SIGNAL(clearResultDisplay()),
+							        editSource, SLOT(clear()));
 							boxLayout->addWidget(editSource);
 							}
 						boxSource->setLayout(boxLayout);
@@ -215,6 +217,8 @@ void Verifier::createLayout()
 							}
 						if (editDestination != NULL)
 							{
+							connect(this, SIGNAL(clearResultDisplay()),
+							        editDestination, SLOT(clear()));
 							boxLayout->addWidget(editDestination);
 							}
 
@@ -264,6 +268,19 @@ void Verifier::createLayout()
 				connect(buttonCopy, SIGNAL(clicked()),
 				        this, SLOT(doCopy()));
 				commandLayout->addWidget(buttonCopy);
+				}
+
+			if (buttonReset == NULL)
+				{
+				buttonReset = new QPushButton("Reset");
+				}
+			if (buttonReset != NULL)
+				{
+				connect(buttonReset, SIGNAL(clicked()),
+				        this, SIGNAL(resetDatabase()));
+				connect(buttonReset, SIGNAL(clicked()),
+				        this, SIGNAL(clearResultDisplay()));
+				commandLayout->addWidget(buttonReset);
 				}
 
 			masterLayout->addLayout(commandLayout);
@@ -372,4 +389,15 @@ void Verifier::receive_new(QString _new)
 	}
 void Verifier::doCopy()
 	{
+	QString source;
+	QString destination;
+	if (labelSourcePath != NULL)
+		{
+		source = labelSourcePath->text();
+		if (labelDestinationPath != NULL)
+			{
+			destination = labelDestinationPath->text();
+			Q_EMIT copyMissing(source, destination);
+			}
+		}
 	}
